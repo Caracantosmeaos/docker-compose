@@ -1,92 +1,81 @@
+version: "3.9"
+
 services:
   api:
     container_name: "caracantosmeaos-api"
-    hostname: "caracantosmeaos-api"
-    image: "caracantosmeaosapi:2.1"
+    #hostname: "caracantosmeaos-api"
+    image: "caracantosmeaosapi:latest"
     restart: unless-stopped
     ports:
       - "8080:80"
-    volumes:
-      - caracantosmeaosapi:/app
     environment:
       - TZ=$TZ
       - DEVMODE=$API_DEVMODE
       - CLUBID=$CLUBID
       - MONGO_URL=$MONGO_URL
+      - CLUB_CACHE_MS=$CLUB_CACHE_MS
+      - XDG_CONFIG_HOME=/tmp/.chromium
+      - XDG_CACHE_HOME=/tmp/.chromium
   worker:
     container_name: "caracantosmeaos-worker"
-    hostname: "caracantosmeaos-worker"
-    image: "caracantosmeaosworker:1.7"
+    image: "caracantosmeaosworker:latest"
     restart: unless-stopped
-    volumes:
-      - caracantosmeaosworker:/app
     environment:
       - TZ=$TZ
       - MONGO_URL=$MONGO_URL
       - WORKKER_INTERVAL=$WORKER_INTERVAL
       - CLUBID=$CLUBID
       - RABBITMQ_URL=$RABBITMQ_URL
-    networks:
-      caracantosmeaos_network:
-        ipv4_address: 192.168.10.10
+      - XDG_CONFIG_HOME=/tmp/.chromium
+      - XDG_CACHE_HOME=/tmp/.chromium
   web:
     container_name: "caracantosmeaos-web"
-    hostname: "caracantosmeaos-web"
-    image: "astrossrserver:latest"
+    image: "caracantosmeaosweb:latest"
     restart: unless-stopped
     volumes:
-      - caracantosmeaosweb:/app
+      - /home/ubuntu/dockerstacks/caracantosmeaos/web/dist:/app/dist
     ports:
       - "8081:80"
     environment:
       - TZ=$TZ
-  discordbot:
-    container_name: "caracantosmeaos-discordbot"
-    hostname: "caracantosmeaos-discordbot"
-    image: "caracantosmeaosdiscordbot:1.5.1"
-    restart: unless-stopped
-    volumes:
-      - caracantosmeaosdiscordbot:/app
-    ports:
-      - "8082:80"
-    environment:
-      - TZ=$TZ
-      - TOKEN=$DISCORD_BOT_TOKEN
-      - IMAGE_GENERATOR_BASEURL=$IMAGE_GENERATOR_BASEURL
-      - RABBITMQ_URL=$RABBITMQ_URL
-    networks:
-      caracantosmeaos_network:
-        ipv4_address: 192.168.10.20
+      - TZ=Europe/Madrid
   imagegenerator:
     container_name: "caracantosmeaos-imagegenerator"
-    hostname: "caracantosmeaos-imagegenerator"
-    image: "caracantosmeaosimagegenerator:1.2"
+    image: "caracantosmeaosimagegenerator:latest"
     restart: unless-stopped
-    volumes:
-      - caracantosmeaosimagegenerator:/home/pptruser
     environment:
       - TZ=$TZ
       - XDG_CONFIG_HOME=/tmp/.chromium
       - XDG_CACHE_HOME=/tmp/.chromium
-
     networks:
       caracantosmeaos_network:
         ipv4_address: 192.168.10.30
+  discordbot:
+    container_name: "caracantosmeaos-discordbot"
+    image: "caracantosmeaosdiscordbot:latest"
+    restart: unless-stopped
+    volumes:
+      - /home/ubuntu/dockerstacks/caracantosmeaos/discordbot/players.database.js:/app/players.database.js
+    networks:
+      - caracantosmeaos_network
+    #ports:
+    #  - "8082:80"
+    environment:
+      - TZ=$TZ
+      - TOKEN=$DISCORD_BOT_TOKEN
+      - IMAGE_GENERATOR_BASEURL=$IMAGE_GENERATOR_BASEURL  # DNS interno
+      - RABBITMQ_URL=$RABBITMQ_URL
+
 
 volumes:
   caracantosmeaosapi:
     name: "caracantosmeaosapi"
-  caracantosmeaosworker:
-    name: "caracantosmeaosworker"
   caracantosmeaosweb:
-    name: "caracantosmeaosweb-volume"
-  caracantosmeaosdiscordbot:
-    name: "caracantosmeaosdiscordbot"
-  caracantosmeaosimagegenerator:
-    name: "caracantosmeaosimagegenerator"
+    name: "caracantosmeaosweb"
+
 networks:
-    caracantosmeaos_network:
-      name: "caracantosmeaos_network"
-      ipam:
-        config:
-          - subnet: 192.168.10.0/24
+  caracantosmeaos_network:
+    name: "caracantosmeaos_network"
+    ipam:
+      config:
+        - subnet: 192.168.10.0/24
